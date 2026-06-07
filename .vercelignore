@@ -1,0 +1,7 @@
+android
+output
+node_modules
+dist
+*.apk
+*.aab
+*.log
