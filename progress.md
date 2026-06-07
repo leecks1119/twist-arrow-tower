@@ -1,0 +1,78 @@
+Original prompt: 이러면 지금 같은 컨셉의 게임을 이렇게 만들어봐
+
+## 2026-06-06
+
+- Created `DESIGN-DOCUMENT.md` for the Arrow Escape web MVP.
+- Created `EVALUATION-CHECKLIST.md` for gameplay, automation, AdMob, and Android checks.
+- Replaced the AdMob test shell with a playable single-canvas Arrow Escape puzzle MVP in `src/App.tsx`.
+- Implemented deterministic generated 6x6 levels, arrow exit-path clearing, stones, timer, undo, hint, skip, clear popup, time-up popup, banner/interstitial test buttons, and auto interstitial attempts every 10 successful clears.
+- Exposed `window.render_game_to_text()` and `window.advanceTime(ms)` for web-game automation.
+- Verified `npm run build` succeeds.
+- Ran Playwright web-game client:
+  - `output/web-game/shot-2.png` verified board/HUD/actions render.
+  - `output/web-game/state-2.json` verified a clearable arrow click increments coins/moves and reduces remaining arrows.
+  - `output/web-game-hint/shot-0.png` verified hint highlight is visible.
+- Fixed bottom action overlap after screenshot review.
+- Verified `npm run android:build:debug` succeeds and produced `android/app/build/outputs/apk/debug/app-debug.apk`.
+- Applied `game-ui-frontend` redesign pass:
+  - Removed persistent AdMob test buttons from the main gameplay surface.
+  - Changed gear button into an options drawer with Restart, Show Banner, Hide Banner, and Test Interstitial.
+  - Enlarged and raised the board to protect the playfield.
+  - Replaced the two-line status/ad panel with one compact status chip.
+  - Reduced persistent bottom controls to three game actions: Undo, Hint, Skip.
+  - Reworked bottom button sizing/position so the central Hint button reads as the primary assist action.
+- Verified redesigned default screen with `output/ui-redesign-final/shot-0.png`.
+- Verified options drawer with `output/ui-redesign-drawer/shot-0.png`.
+- Rebuilt Android APK successfully after UI redesign.
+- Pivoted the prototype from a flat arrow-board into a React Three Fiber 3D Jenga-style arrow tower.
+- Added `three`, `@react-three/fiber`, and `@react-three/drei`.
+- Rebuilt the core play loop around a 12-layer tower with alternating block orientation, clearable exit rules, removed-block gaps, stability pressure, wobble feedback for blocked taps, flying block removal effects, and hint highlighting.
+- Kept the DOM HUD model for clarity: level/coin/timer/stability at top, compact status chip, and Undo/Hint/Skip controls at bottom.
+- Updated automation hooks so `window.render_game_to_text()` reports the 3D tower state and stability, while `window.advanceTime(ms)` still supports timer testing.
+- Verified `npm run build` succeeds after the 3D pivot.
+- Ran Playwright visual checks:
+  - `output/jenga-pivot/shot-1.png` verified tap removal, flying block feedback, and stability updates.
+  - `output/jenga-final/shot-0.png` verified the final ASCII arrow glyph pass renders cleanly without missing-font boxes.
+- Rebuilt Android debug APK successfully after the 3D Jenga pivot.
+- Rebuilt the game concept in `DESIGN-DOCUMENT.md` after researching mobile puzzle/casual game principles, onboarding, retention, UX/UI, and AdMob placement guidance.
+- New concept: `Twist Arrow Tower`, a rotate-and-tap 3D spatial puzzle where the player turns a 4-face tower, previews escape paths, launches valid arrow blocks, and manages time/stability.
+- Implemented the first `Twist Arrow Tower` MVP in `src/App.tsx`:
+  - Replaced the old 3-slot Jenga prototype with a 4-face tower simulation using face/layer/slot cells.
+  - Added swipe and face-button rotation with soft 90-degree tower snapping.
+  - Restricted tapping to the currently active face.
+  - Added path preview markers for blocked and valid moves.
+  - Added Out, Left, Right, Up, and Down launch checks.
+  - Added combo, mistake, stability, time-up, collapse, undo, hint, skip, and clear flows on the new model.
+- Added face selector styling in `src/App.css`.
+- Updated ESLint ignores so generated Android build assets are not linted.
+- Verified `npm run build` succeeds.
+- Verified `npm run lint` succeeds.
+- Verified browser render has no console errors via Playwright screenshot/snapshot.
+- Rebuilt Android debug APK successfully after the `Twist Arrow Tower` MVP.
+- Added reusable glossy UI assets in `src/assets/ui/` and applied them to the HUD, level panel, coin pill, rotate control, status chip, and bottom action buttons.
+- Replaced the 4-button face selector with a compact rotate control to reduce UI clutter.
+- Replaced text-based 3D direction glyphs with larger mesh-based direction marks on the block faces.
+- Increased camera zoom so the tower reads larger in the playfield.
+- Verified `npm run build` and `npm run lint` succeed after the UI asset pass.
+- Verified the updated browser screen with `asset-ui-v2.png`; console errors remain 0.
+- Rebuilt Android debug APK after the UI asset pass.
+- Applied a stronger mobile-game HUD layout pass after the Sleek design request:
+  - Confirmed `SLEEK_API_KEY` is not available, so Sleek API generation could not be used in this environment.
+  - Moved rotate controls from a top selector bar to large side buttons around the tower.
+  - Kept only a small current-face badge near the top.
+  - Enlarged and raised the 3D tower camera framing.
+  - Removed failed foreground leaf decorations that read like checkmarks.
+  - Reduced the Out direction target mark size and simplified status wording.
+  - Verified `npm run build` and `npm run lint` still pass.
+  - Verified browser render with `sleek-layout-v3.png`; console errors remain 0.
+  - Rebuilt Android debug APK after the layout pass.
+
+## TODO
+
+- Replace generated early levels with handcrafted levels 1-15 so onboarding and difficulty ramp are intentional.
+- Upgrade path preview from dots to directional trails/arrows.
+- Add a ghost swipe and tap cue for the first session.
+- Tune stability loss, timer pressure, rewards, and hint/skip economy through playtesting.
+- Add stronger reward/clear sequences for tower completion and near-collapse moments.
+- Add proper settings/shop/daily screens after the 3D gameplay direction is stable.
+- Test on a connected Android device with `npm run android:install:debug` and verify real AdMob test banner/interstitial visuals.
