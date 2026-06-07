@@ -495,9 +495,13 @@ function TowerScene({
         <meshStandardMaterial color="#f0c985" roughness={0.48} />
       </mesh>
       <group ref={towerRef} position={[0, 0.28, 0]}>
-        <mesh receiveShadow position={[0, -0.02, 0]}>
-          <cylinderGeometry args={[1.05, 1.18, layers * 0.42 + 0.08, 4]} />
-          <meshStandardMaterial color="#26334d" roughness={0.74} />
+        <mesh receiveShadow position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.88, 1.42, 4]} />
+          <meshStandardMaterial color="#24324f" roughness={0.72} transparent opacity={0.42} />
+        </mesh>
+        <mesh receiveShadow position={[0, -0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[1.04, 40]} />
+          <meshStandardMaterial color="#10192d" roughness={0.82} transparent opacity={0.18} />
         </mesh>
         {blocks.map((block) => (
           <TowerBlock
