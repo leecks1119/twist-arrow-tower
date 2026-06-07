@@ -1,4 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Text } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { Group, Mesh } from 'three'
@@ -247,16 +248,16 @@ function normalizeAngle(angle: number) {
   return Math.atan2(Math.sin(angle), Math.cos(angle))
 }
 
-function ArrowShape({ color, z }: { color: string; z: number }) {
+function ArrowShape({ color, z, opacity = 1 }: { color: string; z: number; opacity?: number }) {
   return (
     <group>
-      <mesh position={[0, -0.05, z]}>
-        <planeGeometry args={[0.12, 0.36]} />
-        <meshBasicMaterial color={color} transparent opacity={color === '#1a4f8f' ? 0.42 : 1} />
+      <mesh position={[0, -0.08, z]}>
+        <planeGeometry args={[0.16, 0.36]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} />
       </mesh>
-      <mesh position={[0, 0.22, z]} rotation={[0, 0, Math.PI / 2]}>
-        <circleGeometry args={[0.19, 3]} />
-        <meshBasicMaterial color={color} transparent opacity={color === '#1a4f8f' ? 0.42 : 1} />
+      <mesh position={[0, 0.18, z]} rotation={[0, 0, Math.PI / 2]}>
+        <circleGeometry args={[0.23, 3]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} />
       </mesh>
     </group>
   )
@@ -267,44 +268,31 @@ function DirectionMark({ direction }: { direction: Direction }) {
     return (
       <group>
         <mesh position={[0.02, -0.02, -0.006]}>
-          <circleGeometry args={[0.205, 40]} />
-          <meshBasicMaterial color="#1a4f8f" transparent opacity={0.38} />
+          <planeGeometry args={[0.48, 0.25]} />
+          <meshBasicMaterial color="#1a4f8f" transparent opacity={0.42} />
         </mesh>
         <mesh position={[0, 0, -0.003]}>
-          <circleGeometry args={[0.205, 40]} />
+          <planeGeometry args={[0.48, 0.25]} />
           <meshBasicMaterial color="#fff8ef" />
         </mesh>
-        <mesh position={[0, 0, 0]}>
-          <ringGeometry args={[0.084, 0.132, 36]} />
-          <meshBasicMaterial color="#1a4f8f" />
-        </mesh>
-        <mesh position={[0, 0, 0.004]}>
-          <circleGeometry args={[0.035, 24]} />
-          <meshBasicMaterial color="#1a4f8f" />
-        </mesh>
-        <mesh position={[0, 0.24, 0]}>
-          <planeGeometry args={[0.042, 0.14]} />
-          <meshBasicMaterial color="#fff8ef" />
-        </mesh>
-        <mesh position={[0, -0.24, 0]}>
-          <planeGeometry args={[0.042, 0.14]} />
-          <meshBasicMaterial color="#fff8ef" />
-        </mesh>
-        <mesh position={[0.24, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <planeGeometry args={[0.042, 0.14]} />
-          <meshBasicMaterial color="#fff8ef" />
-        </mesh>
-        <mesh position={[-0.24, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <planeGeometry args={[0.042, 0.14]} />
-          <meshBasicMaterial color="#fff8ef" />
-        </mesh>
+        <Text
+          position={[0, 0, 0.006]}
+          fontSize={0.16}
+          color="#1a4f8f"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.004}
+          outlineColor="#fff8ef"
+        >
+          OUT
+        </Text>
       </group>
     )
   }
 
   return (
     <group rotation={[0, 0, directionAngle(direction)]}>
-      <ArrowShape color="#1a4f8f" z={-0.004} />
+      <ArrowShape color="#1a4f8f" z={-0.008} opacity={0.42} />
       <ArrowShape color="#fff8ef" z={0} />
     </group>
   )
