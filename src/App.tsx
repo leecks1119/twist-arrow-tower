@@ -1,5 +1,4 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Text } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { Group, Mesh } from 'three'
@@ -251,12 +250,31 @@ function normalizeAngle(angle: number) {
 function ArrowShape({ color, z, opacity = 1 }: { color: string; z: number; opacity?: number }) {
   return (
     <group>
-      <mesh position={[0, -0.08, z]}>
-        <planeGeometry args={[0.16, 0.36]} />
+      <mesh position={[0, -0.045, z]}>
+        <planeGeometry args={[0.105, 0.17]} />
         <meshBasicMaterial color={color} transparent opacity={opacity} />
       </mesh>
-      <mesh position={[0, 0.18, z]} rotation={[0, 0, Math.PI / 2]}>
-        <circleGeometry args={[0.23, 3]} />
+      <mesh position={[0, 0.085, z]} rotation={[0, 0, Math.PI / 2]}>
+        <circleGeometry args={[0.125, 3]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} />
+      </mesh>
+    </group>
+  )
+}
+
+function OutShape({ color, z, opacity = 1 }: { color: string; z: number; opacity?: number }) {
+  return (
+    <group>
+      <mesh position={[0, 0, z]}>
+        <ringGeometry args={[0.075, 0.13, 32]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} />
+      </mesh>
+      <mesh position={[0, 0, z + 0.001]}>
+        <circleGeometry args={[0.038, 24]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} />
+      </mesh>
+      <mesh position={[0, 0.145, z + 0.002]} rotation={[0, 0, Math.PI / 2]}>
+        <circleGeometry args={[0.095, 3]} />
         <meshBasicMaterial color={color} transparent opacity={opacity} />
       </mesh>
     </group>
@@ -266,26 +284,9 @@ function ArrowShape({ color, z, opacity = 1 }: { color: string; z: number; opaci
 function DirectionMark({ direction }: { direction: Direction }) {
   if (direction === 'out') {
     return (
-      <group>
-        <mesh position={[0.02, -0.02, -0.006]}>
-          <planeGeometry args={[0.48, 0.25]} />
-          <meshBasicMaterial color="#1a4f8f" transparent opacity={0.42} />
-        </mesh>
-        <mesh position={[0, 0, -0.003]}>
-          <planeGeometry args={[0.48, 0.25]} />
-          <meshBasicMaterial color="#fff8ef" />
-        </mesh>
-        <Text
-          position={[0, 0, 0.006]}
-          fontSize={0.16}
-          color="#1a4f8f"
-          anchorX="center"
-          anchorY="middle"
-          outlineWidth={0.004}
-          outlineColor="#fff8ef"
-        >
-          OUT
-        </Text>
+      <group rotation={[0, 0, 0]}>
+        <OutShape color="#1a4f8f" z={-0.01} opacity={0.48} />
+        <OutShape color="#fff8ef" z={0} />
       </group>
     )
   }
@@ -299,10 +300,18 @@ function DirectionMark({ direction }: { direction: Direction }) {
 }
 
 function BlockMark({ block }: { block: Block }) {
+  const [x, y, z] = cellPosition(block)
+  const topRotation = block.face === 0 ? 0 : block.face === 1 ? -Math.PI / 2 : block.face === 2 ? Math.PI : Math.PI / 2
+
   return (
-    <group position={markPosition(block)} rotation={faceRotation(block.face)}>
-      <DirectionMark direction={block.direction} />
-    </group>
+    <>
+      <group position={markPosition(block)} rotation={faceRotation(block.face)} scale={1.14}>
+        <DirectionMark direction={block.direction} />
+      </group>
+      <group position={[x, y + 0.205, z]} rotation={[-Math.PI / 2, 0, topRotation]} scale={0.78}>
+        <DirectionMark direction={block.direction} />
+      </group>
+    </>
   )
 }
 
@@ -436,6 +445,7 @@ function TowerScene({
   blocks,
   layers,
   activeFace,
+  dragAngle,
   hintId,
   blockedId,
   previewId,
@@ -449,6 +459,7 @@ function TowerScene({
   blocks: Block[]
   layers: number
   activeFace: Face
+  dragAngle: number
   hintId: number | null
   blockedId: number | null
   previewId: number | null
@@ -467,7 +478,7 @@ function TowerScene({
 
   useFrame(({ clock }) => {
     if (!towerRef.current) return
-    const target = -activeFace * Math.PI / 2
+    const target = -activeFace * Math.PI / 2 + dragAngle
     towerRef.current.rotation.y += normalizeAngle(target - towerRef.current.rotation.y) * 0.16
     towerRef.current.rotation.z = Math.sin(clock.elapsedTime * 2.3) * lean * 0.04
   })
@@ -544,11 +555,12 @@ function App() {
   const [mode, setMode] = useState<Mode>('playing')
   const [blocks, setBlocks] = useState(() => generateBlocks(1))
   const [activeFace, setActiveFace] = useState<Face>(0)
+  const [dragAngle, setDragAngle] = useState(0)
   const [undoStack, setUndoStack] = useState<HistoryEntry[]>([])
   const [hintId, setHintId] = useState<number | null>(null)
   const [blockedId, setBlockedId] = useState<number | null>(null)
   const [previewId, setPreviewId] = useState<number | null>(null)
-  const [status, setStatus] = useState('Swipe, spot, launch.')
+  const [status, setStatus] = useState('Drag, spot, launch.')
   const [adStatus, setAdStatus] = useState('Initializing AdMob test mode...')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [stability, setStability] = useState(100)
@@ -556,6 +568,9 @@ function App() {
   const nextEffectId = useRef(1000)
   const dragStartX = useRef<number | null>(null)
   const dragStartY = useRef<number | null>(null)
+  const dragStartFace = useRef<Face>(0)
+  const dragMoved = useRef(false)
+  const lastDragEndedAt = useRef(0)
   const layers = towerLayers(level)
   const timerLimit = level < 6 ? 90 : Math.max(50, 95 - Math.floor(level / 4) * 4)
 
@@ -625,6 +640,7 @@ function App() {
     setTimer(nextTimer)
     setBlocks(generateBlocks(nextLevel))
     setActiveFace(0)
+    setDragAngle(0)
     setUndoStack([])
     setHintId(null)
     setBlockedId(null)
@@ -633,7 +649,7 @@ function App() {
     setMode('playing')
     setDrawerOpen(false)
     setFlyouts([])
-    setStatus(nextLevel <= 2 ? 'Swipe to rotate. Tap the target marks.' : 'Rotate to find the open path.')
+    setStatus(nextLevel <= 2 ? 'Drag to rotate. Tap the target marks.' : 'Rotate to find the open path.')
   }
 
   function nextLevel() {
@@ -648,6 +664,7 @@ function App() {
   function rotate(delta: 1 | -1) {
     if (mode !== 'playing') return
     setActiveFace((face) => wrapFace(face + delta))
+    setDragAngle(0)
     setPreviewId(null)
     setHintId(null)
     setStatus('Check the new face for an open path.')
@@ -655,6 +672,7 @@ function App() {
 
   function tryBlock(id: number) {
     if (mode !== 'playing') return
+    if (Date.now() - lastDragEndedAt.current < 180) return
     const block = blocks.find((item) => item.id === id)
     if (!block || block.removed || block.face !== activeFace) return
 
@@ -731,27 +749,65 @@ function App() {
   }
 
   function onShellPointerDown(event: ReactPointerEvent<HTMLElement>) {
+    if (event.target instanceof Element && event.target.closest('button')) return
+    if (mode !== 'playing') return
+    event.currentTarget.setPointerCapture(event.pointerId)
     dragStartX.current = event.clientX
     dragStartY.current = event.clientY
+    dragStartFace.current = activeFace
+    dragMoved.current = false
+    setPreviewId(null)
   }
 
-  function onShellPointerUp(event: ReactPointerEvent<HTMLElement>) {
+  function onShellPointerMove(event: ReactPointerEvent<HTMLElement>) {
     if (dragStartX.current == null || dragStartY.current == null) return
     const dx = event.clientX - dragStartX.current
     const dy = event.clientY - dragStartY.current
+    if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 0.85) return
+    dragMoved.current = true
+    setDragAngle(Math.max(-Math.PI, Math.min(Math.PI, dx / 132)))
+    setHintId(null)
+    setStatus('Release to face the nearest side.')
+  }
+
+  function finishDrag(event: ReactPointerEvent<HTMLElement>) {
+    if (dragStartX.current == null || dragStartY.current == null) return
+    const dx = event.clientX - dragStartX.current
+    const dy = event.clientY - dragStartY.current
+    const moved = dragMoved.current && Math.abs(dx) >= 28 && Math.abs(dx) >= Math.abs(dy) * 0.85
     dragStartX.current = null
     dragStartY.current = null
-    if (Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.25) return
-    rotate(dx < 0 ? 1 : -1)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    if (!moved) {
+      setDragAngle(0)
+      return
+    }
+
+    const endAngle = Math.max(-Math.PI, Math.min(Math.PI, dx / 132))
+    const faceDelta = Math.max(-2, Math.min(2, Math.round(-endAngle / (Math.PI / 2))))
+    setActiveFace(wrapFace(dragStartFace.current + faceDelta))
+    setDragAngle(0)
+    setPreviewId(null)
+    lastDragEndedAt.current = Date.now()
+    setStatus('Check the new face for an open path.')
   }
 
   return (
-    <main className="game-shell" onPointerDown={onShellPointerDown} onPointerUp={onShellPointerUp}>
+    <main
+      className="game-shell"
+      onPointerDown={onShellPointerDown}
+      onPointerMove={onShellPointerMove}
+      onPointerUp={finishDrag}
+      onPointerCancel={finishDrag}
+    >
       <Canvas shadows orthographic camera={{ position: [0, 4.8, 7.2], zoom: 70, near: 0.1, far: 100 }}>
         <TowerScene
           blocks={blocks}
           layers={layers}
           activeFace={activeFace}
+          dragAngle={dragAngle}
           hintId={hintId}
           blockedId={blockedId}
           previewId={previewId}
