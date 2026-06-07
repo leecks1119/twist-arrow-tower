@@ -177,7 +177,7 @@ function firstLaunchable(blocks: Block[], layers: number) {
 }
 
 function cellPosition(cell: Cell): [number, number, number] {
-  const radius = 1.52
+  const radius = 0.98
   const offset = (cell.slot - 1) * 0.72
   const y = cell.layer * 0.42 + 0.22
 
@@ -195,7 +195,7 @@ function faceRotation(face: Face): [number, number, number] {
 }
 
 function blockSize(face: Face): [number, number, number] {
-  return face === 0 || face === 2 ? [0.62, 0.34, 0.48] : [0.48, 0.34, 0.62]
+  return face === 0 || face === 2 ? [0.66, 0.36, 0.58] : [0.58, 0.36, 0.66]
 }
 
 function faceNormal(face: Face): [number, number, number] {
@@ -495,13 +495,13 @@ function TowerScene({
         <meshStandardMaterial color="#f0c985" roughness={0.48} />
       </mesh>
       <group ref={towerRef} position={[0, 0.28, 0]}>
-        <mesh receiveShadow position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.88, 1.42, 4]} />
-          <meshStandardMaterial color="#24324f" roughness={0.72} transparent opacity={0.42} />
+        <mesh receiveShadow position={[0, 0.04, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <boxGeometry args={[1.76, 0.16, 1.76]} />
+          <meshStandardMaterial color="#233250" roughness={0.68} transparent opacity={0.38} />
         </mesh>
-        <mesh receiveShadow position={[0, -0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[1.04, 40]} />
-          <meshStandardMaterial color="#10192d" roughness={0.82} transparent opacity={0.18} />
+        <mesh receiveShadow position={[0, 0.11, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <boxGeometry args={[1.32, 0.06, 1.32]} />
+          <meshStandardMaterial color="#fff1c9" roughness={0.48} transparent opacity={0.18} />
         </mesh>
         {blocks.map((block) => (
           <TowerBlock
